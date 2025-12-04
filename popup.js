@@ -8,58 +8,62 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchText = searchBtn.querySelector(".search-text");
   const spinner = searchBtn.querySelector(".spinner");
 
-  // Load last search
   chrome.storage.local.get(["lastQuery"], (data) => {
     if (data.lastQuery) queryInput.value = data.lastQuery;
   });
 
-  // ==========================================================
-  // CLEAN SUBTITLE NAME — removes garbage & makes it pretty
-  // ==========================================================
   function cleanSubtitleName(name) {
     if (!name) return null;
-
-    // Remove garbage characters
     let cleaned = name.replace(/[^\w\s.\-()]/g, "");
-
-    // Normalize multiple spaces
     cleaned = cleaned.replace(/\s+/g, " ").trim();
-
-    // Truncate long names
     if (cleaned.length > 60) {
       cleaned = cleaned.substring(0, 57) + "...";
     }
-
     return cleaned || null;
+  }
+
+  function safeTextNode(text) {
+    return document.createTextNode(text || "");
+  }
+
+  function clearNode(node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
   }
 
   async function runSearch() {
     const query = queryInput.value.trim();
+    clearNode(resultsDiv);
+
     if (!query) {
-      resultsDiv.innerHTML = "<p>Please enter a movie or series name.</p>";
+      const p = document.createElement("p");
+      p.textContent = "Please enter a movie or series name.";
+      resultsDiv.appendChild(p);
       return;
     }
 
-    // Show loading animation
     spinner.classList.remove("hidden");
     searchText.classList.add("hidden");
 
     chrome.storage.local.set({ lastQuery: query });
     emptyState.classList.add("hidden");
     errorState.classList.add("hidden");
-    resultsDiv.innerHTML = "";
 
     chrome.runtime.sendMessage({ action: "searchSubtitles", query }, (response) => {
       spinner.classList.add("hidden");
       searchText.classList.remove("hidden");
 
+      clearNode(resultsDiv);
+
       if (!response) {
-        resultsDiv.innerHTML = "<p style='color:red'>No response from background.</p>";
+        const p = document.createElement("p");
+        p.style.color = "red";
+        p.textContent = "No response from background.";
+        resultsDiv.appendChild(p);
         return;
       }
+
       if (response.error) {
         console.error("Search error:", response.error);
-        resultsDiv.innerHTML = "";
         errorState.classList.remove("hidden");
         return;
       }
@@ -67,36 +71,25 @@ document.addEventListener("DOMContentLoaded", () => {
       let subtitles = response.subtitles || [];
       const queryLower = query.toLowerCase().trim();
 
-      // 1 — exact match
       let exactMatches = subtitles.filter(sub => {
         const fd = sub.attributes?.feature_details || {};
-        const title = (fd.title || "").toLowerCase().trim();
-        return title === queryLower;
+        return (fd.title || "").toLowerCase().trim() === queryLower;
       });
 
-      // 2 — fallback to partial match
       if (exactMatches.length === 0) {
         exactMatches = subtitles.filter(sub => {
           const fd = sub.attributes?.feature_details || {};
-          const title = (fd.title || "").toLowerCase();
-          return title.includes(queryLower);
+          return (fd.title || "").toLowerCase().includes(queryLower);
         });
       }
 
       subtitles = exactMatches;
 
-      // No results
       if (!subtitles.length) {
-        resultsDiv.innerHTML = "";
         emptyState.classList.remove("hidden");
         return;
       }
 
-      resultsDiv.innerHTML = "";
-
-      // ==========================================================
-      // RENDER RESULTS
-      // ==========================================================
       subtitles.forEach((sub) => {
         const attrs = sub.attributes || {};
         const file = (attrs.files || [])[0];
@@ -105,33 +98,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const title = fd.title || attrs.release || "Unknown title";
         const year = fd.year ? ` (${fd.year})` : "";
-
-        // Clean names
-        const cleanRelease = cleanSubtitleName(attrs.release);
-        const cleanFile = cleanSubtitleName(file?.file_name);
-
-        const subtitleName = cleanRelease || cleanFile || "Subtitle File";
+        const subtitleName = cleanSubtitleName(attrs.release)
+          || cleanSubtitleName(file?.file_name)
+          || "Subtitle File";
         const lang = attrs.language || "N/A";
 
-        const item = document.createElement("div");
-        item.className =
+        const card = document.createElement("div");
+        card.className =
           "subtitle-card p-4 bg-slate-800/50 border border-slate-700 rounded-xl transition-transform duration-200 relative";
 
-        item.innerHTML = `
-          <p class="font-semibold text-white">${title}${year}</p>
-          <p class="text-slate-300 text-xs mt-1">${subtitleName}</p>
-          <p class="text-slate-400 text-sm">Language: ${lang}</p>
+        const titleP = document.createElement("p");
+        titleP.className = "font-semibold text-white";
+        titleP.textContent = title + year;
 
-          <button class="downloadBtn" title="Download">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4">
-              </path>
-            </svg>
-          </button>
-        `;
+        const nameP = document.createElement("p");
+        nameP.className = "text-slate-300 text-xs mt-1";
+        nameP.textContent = subtitleName;
 
-        const downloadBtn = item.querySelector(".downloadBtn");
+        const langP = document.createElement("p");
+        langP.className = "text-slate-400 text-sm";
+        langP.textContent = "Language: " + lang;
+
+        const downloadBtn = document.createElement("button");
+        downloadBtn.className = "downloadBtn";
+        downloadBtn.title = "Download";
+
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2");
+        svg.setAttribute("viewBox", "0 0 24 24");
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("stroke-linecap", "round");
+        path.setAttribute("stroke-linejoin", "round");
+        path.setAttribute(
+          "d",
+          "M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4"
+        );
+
+        svg.appendChild(path);
+        downloadBtn.appendChild(svg);
 
         downloadBtn.addEventListener("click", () => {
           if (fileId) {
@@ -141,18 +148,18 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
 
-        resultsDiv.appendChild(item);
+        card.appendChild(titleP);
+        card.appendChild(nameP);
+        card.appendChild(langP);
+        card.appendChild(downloadBtn);
+
+        resultsDiv.appendChild(card);
       });
     });
   }
 
-  // Button click
   searchBtn.addEventListener("click", runSearch);
-
-  // Retry button click
   retryBtn.addEventListener("click", runSearch);
-
-  // Enter key triggers search
   queryInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") runSearch();
   });

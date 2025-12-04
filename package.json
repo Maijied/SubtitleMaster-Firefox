@@ -1,16 +1,25 @@
 {
   "name": "subtitle-downloader",
   "version": "1.0.0",
-  "description": "",
+  "description": "Subtitle Downloader Pro – Chrome & Firefox Extension",
   "main": "background.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:firefox": "web-ext build --source-dir ./ --artifacts-dir ./web-ext-artifacts",
+    "run:firefox": "web-ext run --source-dir ./"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "subtitles",
+    "extension",
+    "firefox",
+    "chrome",
+    "opensubtitles"
+  ],
+  "author": "Maizied Hasan Majumder",
+  "license": "MIT",
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.17",
-    "tailwindcss": "^4.1.17"
+    "tailwindcss": "^4.1.17",
+    "web-ext": "^7.10.0"
   }
 }
