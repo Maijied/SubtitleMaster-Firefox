@@ -77,7 +77,8 @@ This extension can run in Firefox after adding a
 To build a distributable `.xpi` for Firefox Add-ons (AMO):
 ```
 npm install --global web-ext
-web-ext build
+npx web-ext lint
+npx web-ext build
 ```
 
 The generated `.xpi` file in the `web-ext-artifacts` directory can be submitted to Firefox Add-ons (AMO) for publishing.
