@@ -1,4 +1,4 @@
-# Subtitle Downloader Pro – Chrome Extension
+# Subtitle Downloader Pro – Firefox Extension
 
 <!-- PROJECT LOGO -->
 <p align="center">
@@ -6,15 +6,8 @@
   <img src="assets/logo.png" alt="Subtitle Downloader Pro Logo" width="120">
 </p>
 
-Subtitle Downloader Pro is a lightweight and efficient Chrome extension that lets you search and download subtitles instantly using the official OpenSubtitles API.[web:21]  
-Designed for simplicity and speed, it helps you find correct subtitles for movies, TV shows, anime, documentaries, and more with just a click.[web:21]
-
-<!-- DOWNLOAD BUTTON -->
-<p align="center">
-  <a href="Download/subtitle-downloader.zip">
-    <img src="https://img.shields.io/badge/Download-subtitle--downloader.zip-blue?style=for-the-badge" alt="Download subtitle-downloader.zip">
-  </a>
-</p>
+Subtitle Downloader Pro is a lightweight and efficient browser extension that lets you search and download subtitles instantly using the official OpenSubtitles API.
+Designed for simplicity and speed, it helps you find accurate subtitles for movies, TV shows, anime, and more — with just one click.
 
 ---
 
@@ -60,26 +53,34 @@ subtitle-downloader/
 │── assets/
 │ ├── logo.png 
 │ └── screenshot.png 
-│── Download/
-│ ├── subtitle-downloader.zip
 
 ```
 
 ---
 
-## Installation (Local Development)
+## 🦊 Firefox Installation (Developer Mode)
 
-1. Clone or download this repository:
+Firefox still relies heavily on Manifest V2 but supports much of the Manifest V3 syntax when used together with the browser polyfill.  
+This extension can run in Firefox after adding a 
+- `browser_specific_settings` block to `manifest.json` and making sure `browser-polyfill.js` is loaded in your scripts.
 
-- git clone https://github.com/Maijied/subtitle-downloader.git
-- cd subtitle-downloader
+### Load as Temporary Add-on
 
-2. Open Chrome and go to: chrome://extensions/
+1. Open Firefox and navigate to:  
+   `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on…**
+3. In the file picker, select the `manifest.json` file inside your project folder.
+4. The extension will be installed temporarily and will remain active until Firefox is closed.
 
-3. Turn on **Developer mode**.  
-4. Click **Load unpacked**.  
-5. Select the `subtitle-downloader/` folder.  
-6. The extension will appear in your Chrome extensions list and toolbar.[web:21]
+### Firefox Packaging (Optional)
+
+To build a distributable `.xpi` for Firefox Add-ons (AMO):
+```
+npm install --global web-ext
+web-ext build
+```
+
+The generated `.xpi` file in the `web-ext-artifacts` directory can be submitted to Firefox Add-ons (AMO) for publishing.
 
 ---
 
@@ -105,26 +106,46 @@ subtitle-downloader/
 
 ```
 {
-    "manifest_version": 3,
-    "name": "Subtitle Downloader Pro",
-    "version": "1.0.2",
-    "author": "Maizied Hasan Majumder",
-    "homepage_url": "https://github.com/Maijied",
-    "description": "Professional subtitle search & download using   OpenSubtitles API",
-    "permissions": ["downloads", "storage"],
-    "host_permissions": ["https://api.opensubtitles.com/*"],
-    "action": {
+  "manifest_version": 3,
+  "name": "Subtitle Downloader Pro",
+  "version": "1.0.2",
+
+  "author": "Maizied Hasan Majumder",
+  "homepage_url": "https://github.com/Maijied",
+
+  "description": "Professional subtitle search & download using OpenSubtitles API",
+
+  "permissions": ["downloads", "storage"],
+  "host_permissions": ["https://api.opensubtitles.com/*"],
+
+  "action": {
     "default_popup": "popup.html",
     "default_title": "Subtitle Downloader"
-},
-    "icons": {
-        "16": "icon16.png",
-        "48": "icon48.png",
-        "128": "icon128.png"
-    },
-    "background": {
-        "service_worker": "background.js"
+  },
+
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["browser-polyfill.js"],
+      "matches": ["<all_urls>"]
     }
+  ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "subtitle-downloader-pro@maijied",
+      "strict_min_version": "109.0"
+    }
+  }
 }
 ```
 
@@ -137,22 +158,6 @@ subtitle-downloader/
 - Chrome Extensions Manifest V3  
 - OpenSubtitles REST API[web:21]
 
----
-
-## Publishing to Chrome Web Store
-
-1. Create a ZIP of your extension folder:
-
-- cd ~/Desktop
-- zip -r subtitle-downloader.zip subtitle-downloader/
-
-2. Go to the Chrome Web Store Developer Dashboard:  
-https://chrome.google.com/webstore/devconsole  
-3. Click **New Item** and upload `subtitle-downloader.zip`.  
-4. Add title, description, screenshots/promo images, and a 128×128 icon.  
-5. Submit for review.[web:21]
-
----
 
 ## Author
 
